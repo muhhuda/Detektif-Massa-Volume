@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detektif Sains: Petualangan Massa & Volume</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+        .bounce-gentle {
+            animation: bounceGentle 2s infinite ease-in-out;
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .water-animation {
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .seesaw-beam {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
+        }
+        .draggable-item {
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            transition: all 0.2s ease;
+        }
+        .draggable-item:hover {
+            transform: translateY(-4px) scale(1.03);
+        }
+        .draggable-item:active {
+            transform: scale(0.95);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4ade80;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between selection:bg-emerald-200">
+
+    <!-- Header / Navigation Bar -->
+    <header class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md border border-white/30 text-yellow-300">
+                    <i class="fa-solid fa-flask-vial text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Detektif Massa & Volume</h1>
+                    <p class="text-xs text-emerald-100 font-medium">IPAS Kelas IV SD - Bab 2 Wujud Zat</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="flex items-center space-x-3 text-sm">
+                <div class="bg-emerald-800/40 px-3 py-1.5 rounded-xl border border-emerald-400/30 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-star text-amber-300"></i>
+                    <span class="font-bold text-amber-200" id="global-score">0</span>
+                    <span class="text-xs text-emerald-200">Poin</span>
+                </div>
+                <div class="bg-emerald-800/40 px-3 py-1.5 rounded-xl border border-emerald-400/30 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-award text-yellow-400"></i>
+                    <span class="font-bold" id="badge-count">0/4</span>
+                </div>
+                <button id="audio-toggle" onclick="toggleAudio()" class="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-all" title="Audio Suara">
+                    <i id="audio-icon" class="fa-solid fa-volume-high text-white"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow">
+
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 mb-6">
+            <button onclick="switchTab('lab')" id="tab-btn-lab" class="tab-btn active px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-emerald-600 text-white">
+                <i class="fa-solid fa-flask"></i>
+                <span>1. Lab Simulasi</span>
+            </button>
+            <button onclick="switchTab('compare')" id="tab-btn-compare" class="tab-btn px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-white text-slate-700 hover:bg-emerald-50">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span>2. Benda Besar vs Bermassa</span>
+            </button>
+            <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="tab-btn px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-white text-slate-700 hover:bg-emerald-50">
+                <i class="fa-solid fa-brain"></i>
+                <span>3. Kuis Detektif</span>
+            </button>
+            <button onclick="switchTab('material')" id="tab-btn-material" class="tab-btn px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-white text-slate-700 hover:bg-emerald-50">
+                <i class="fa-solid fa-book-open"></i>
+                <span>4. Ringkasan Materi</span>
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SECTION 1: LAB SIMULATION                  -->
+        <!-- ========================================== -->
+        <section id="sec-lab" class="tab-content block">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100">
+                <div class="mb-6 text-center max-w-2xl mx-auto">
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Laboratorium Interaktif IPAS</span>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-1">Ukur Massa & Volume Benda!</h2>
+                    <p class="text-slate-600 text-sm mt-1">Pilih atau klik benda di rak untuk diuji pada <b>Timbangan Digital (Massa)</b> dan <b>Gelas Ukur Air (Volume)</b>!</p>
+                </div>
+
+                <!-- Lab Instruments & Shelf Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                    
+                    <!-- Instrument A: Neraca / Timbangan Digital -->
+                    <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden group hover:border-emerald-400 transition-all shadow-sm">
+                        <div class="w-full flex justify-between items-center mb-4">
+                            <span class="bg-emerald-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+                                <i class="fa-solid fa-weight-scale mr-1"></i> Timbangan (Massa)
+                            </span>
+                            <button onclick="resetLab()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded-lg font-semibold transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                            </button>
+                        </div>
+                        
+                        <!-- Scale Surface / Plate -->
+                        <div class="w-full my-4 flex flex-col items-center">
+                            <div id="scale-plate" class="w-40 h-10 bg-gradient-to-b from-slate-300 to-slate-400 rounded-t-xl border-t-4 border-slate-400 flex items-center justify-center shadow-inner">
+                                <div id="scale-item-display" class="flex items-center justify-center h-12 -mt-10">
+                                    <span class="text-slate-400 text-xs italic">Belum ada benda</span>
+                                </div>
+                            </div>
+                            <div class="w-48 h-28 bg-slate-800 rounded-b-2xl p-3 shadow-lg flex flex-col items-center justify-between border-t-4 border-emerald-500">
+                                <!-- Digital LCD Display -->
+                                <div class="w-full bg-emerald-950 border-2 border-emerald-700 rounded-lg p-2 text-center shadow-inner">
+                                    <span id="scale-value" class="font-mono text-3xl font-bold text-emerald-400 tracking-wider">0.0</span>
+                                    <span class="font-mono text-xs text-emerald-500 font-semibold ml-1" id="scale-unit">gram</span>
+                                </div>
+                                <div class="w-full text-center text-[11px] text-slate-400">
+                                    <span>Satuan Baku: Gram (g) / Kilogram (kg)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 mt-2">
+                            <p class="font-bold flex items-center"><i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i> Konsep Massa:</p>
+                            <p class="mt-0.5 leading-relaxed">Massa adalah <b>banyaknya zat penyusun</b> suatu benda. Nilainya tetap di mana pun benda diletakkan!</p>
+                        </div>
+                    </div>
+
+                    <!-- Shelf of Objects -->
+                    <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-4 flex flex-col items-center shadow-sm">
+                        <h3 class="font-bold text-amber-900 text-sm mb-3 flex items-center">
+                            <i class="fa-solid fa-boxes-stacked mr-2 text-amber-600"></i> Rak Benda Uji IPAS
+                        </h3>
+                        <div id="object-shelf" class="grid grid-cols-2 gap-3 w-full">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                        <p class="text-xs text-amber-700 mt-4 text-center">Klik salah satu sampel benda di atas untuk mengukurnya!</p>
+                    </div>
+
+                    <!-- Instrument B: Gelas Ukur Volume -->
+                    <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden hover:border-cyan-400 transition-all shadow-sm">
+                        <div class="w-full flex justify-between items-center mb-2">
+                            <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+                                <i class="fa-solid fa-flask mr-1"></i> Gelas Ukur (Volume)
+                            </span>
+                        </div>
+
+                        <!-- Cylinder UI -->
+                        <div class="relative w-32 h-64 bg-slate-200/60 border-4 border-slate-300 rounded-b-3xl border-t-0 mt-4 mb-2 overflow-hidden backdrop-blur-sm shadow-inner flex flex-col justify-end">
+                            <!-- Measurement ticks -->
+                            <div class="absolute left-1 top-0 bottom-0 flex flex-col justify-between text-[9px] font-mono text-slate-500 py-2 select-none z-10">
+                                <span>300 mL</span>
+                                <span>250 mL</span>
+                                <span>200 mL</span>
+                                <span>150 mL</span>
+                                <span>100 mL</span>
+                                <span>50 mL</span>
+                            </div>
+
+                            <!-- Water Fill Container -->
+                            <div id="water-fill" class="w-full bg-gradient-to-t from-cyan-600 via-cyan-500 to-cyan-400/80 water-animation relative flex items-center justify-center shadow-lg" style="height: 33.3%;">
+                                <!-- Bubbles effect -->
+                                <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle,_transparent_20%,_#ffffff_20%)] bg-[length:10px_10px]"></div>
+                                <!-- Object inside water -->
+                                <div id="cylinder-item-display" class="z-20 transition-all duration-500"></div>
+                            </div>
+                        </div>
+
+                        <!-- Digital Readout for Volume -->
+                        <div class="w-full bg-slate-800 rounded-xl p-2.5 text-center text-white border-b-4 border-cyan-500">
+                            <div class="text-xs text-cyan-300 font-semibold mb-0.5">Total Volume Air + Benda:</div>
+                            <span id="volume-value" class="font-mono text-2xl font-bold text-cyan-400">100</span>
+                            <span class="font-mono text-xs text-cyan-300">mL</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5" id="volume-delta">(Air Awal: 100 mL)</div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="w-full bg-cyan-50 border border-cyan-200 rounded-xl p-3 text-xs text-cyan-900 mt-3">
+                            <p class="font-bold flex items-center"><i class="fa-solid fa-droplet text-cyan-600 mr-1.5"></i> Konsep Volume:</p>
+                            <p class="mt-0.5 leading-relaxed">Volume adalah <b>ruang yang ditempati</b> benda. Diukur dari kenaikan air gelas ukur!</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Analysis Panel -->
+                <div id="observation-card" class="mt-6 bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 hidden">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-emerald-500 text-white p-3 rounded-xl">
+                            <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-900 text-base" id="obs-title">Hasil Pengamatan Detektif</h4>
+                            <p class="text-sm text-emerald-800 mt-1" id="obs-desc">Silakan pilih benda dari rak untuk dianalisis.</p>
+                            <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold" id="obs-tags">
+                                <!-- Dynamic tags -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 2: BENDA BESAR VS BERMASSA BESAR  -->
+        <!-- ========================================== -->
+        <section id="sec-compare" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-teal-100">
+                <div class="mb-6 text-center max-w-2xl mx-auto">
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Tantangan Konsep IPAS</span>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-1">Benda Besar Belum Tentu Bermassa Besar!</h2>
+                    <p class="text-slate-600 text-sm mt-1">Ukuran benda (volume) tidak bisa menjadi patokan tunggal untuk menentukan massanya (beratnya). Mari kita buktikan!</p>
+                </div>
+
+                <!-- Seesaw Balance Game Challenge -->
+                <div class="bg-gradient-to-b from-sky-50 to-indigo-50 border-2 border-indigo-100 rounded-3xl p-6 relative overflow-hidden shadow-inner">
+                    
+                    <!-- Challenge Status Header -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold">
+                            Tantangan Ke-<span id="compare-step-num">1</span> dari 4
+                        </div>
+                        <div class="text-xs font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-lg" id="compare-score-badge">
+                            Skor Tantangan: <span id="compare-score">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Seesaw Visual -->
+                    <div class="relative w-full max-w-md mx-auto my-6 py-4 flex flex-col items-center">
+                        <div id="seesaw-beam" class="seesaw-beam w-full h-4 bg-slate-700 rounded-full relative flex justify-between items-center px-4 shadow-md">
+                            <!-- Left Plate -->
+                            <div class="absolute -left-2 -top-12 bg-white/90 border-2 border-indigo-300 p-2 rounded-2xl shadow-md flex items-center justify-center w-20 h-16">
+                                <span id="seesaw-left-icon" class="text-3xl">🧽</span>
+                            </div>
+                            <!-- Right Plate -->
+                            <div class="absolute -right-2 -top-12 bg-white/90 border-2 border-indigo-300 p-2 rounded-2xl shadow-md flex items-center justify-center w-20 h-16">
+                                <span id="seesaw-right-icon" class="text-3xl">🪨</span>
+                            </div>
+                        </div>
+                        <!-- Seesaw Fulcrum/Base -->
+                        <div class="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[35px] border-b-slate-800 -mt-1"></div>
+                    </div>
+
+                    <!-- Comparison Arena Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center my-4">
+                        
+                        <!-- Item Left -->
+                        <div id="card-left" class="bg-white p-5 rounded-2xl shadow-md border-2 border-slate-200 flex flex-col items-center text-center transition-all hover:border-indigo-400">
+                            <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Benda A</span>
+                            <div id="img-left" class="text-6xl my-2 bounce-gentle">🧽</div>
+                            <h3 id="title-left" class="font-bold text-lg text-slate-800">Spons Cuci Raksasa</h3>
+                            <div class="mt-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                                Ukuran Ruang (Volume): <span id="vol-left" class="font-bold text-indigo-600">Sangat Besar</span>
+                            </div>
+                        </div>
+
+                        <!-- Item Right -->
+                        <div id="card-right" class="bg-white p-5 rounded-2xl shadow-md border-2 border-slate-200 flex flex-col items-center text-center transition-all hover:border-indigo-400">
+                            <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Benda B</span>
+                            <div id="img-right" class="text-6xl my-2 bounce-gentle">🪨</div>
+                            <h3 id="title-right" class="font-bold text-lg text-slate-800">Batu Kerikil Padat</h3>
+                            <div class="mt-2 text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                                Ukuran Ruang (Volume): <span id="vol-right" class="font-bold text-indigo-600">Kecil</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Question Prompt & Action Buttons -->
+                    <div class="mt-6 bg-white/90 backdrop-blur-sm p-5 rounded-2xl border border-indigo-200 text-center max-w-xl mx-auto shadow-sm">
+                        <p class="font-bold text-slate-800 text-base mb-3" id="compare-question-text">
+                            Manakah benda yang memiliki MASSA (banyaknya zat/berat) lebih besar?
+                        </p>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="answerComparison('A')" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center">
+                                <i class="fa-solid fa-arrow-left mr-2"></i> Pilih Benda A
+                            </button>
+                            <button onclick="answerComparison('B')" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center">
+                                Pilih Benda B <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Result Feedback Modal inside section -->
+                    <div id="compare-feedback" class="mt-4 bg-emerald-100 border-2 border-emerald-400 p-4 rounded-2xl hidden">
+                        <div class="flex items-start space-x-3">
+                            <div id="feedback-icon" class="text-3xl">🎉</div>
+                            <div>
+                                <h4 id="feedback-title" class="font-bold text-emerald-900 text-base">Jawaban Tepat!</h4>
+                                <p id="feedback-text" class="text-sm text-emerald-800 mt-1">Spons berukuran besar (volume besar) memiliki rongga udara sehingga massanya lebih kecil daripada batu yang padat.</p>
+                                <button onclick="nextComparison()" class="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-md">
+                                    Lanjut Tantangan Berikutnya <i class="fa-solid fa-forward ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 3: KUIS DETEKTIF SAINS             -->
+        <!-- ========================================== -->
+        <section id="sec-quiz" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-purple-100">
+                <div class="mb-6 text-center max-w-2xl mx-auto">
+                    <span class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Uji Pemahaman Detektif</span>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-1">Kuis Massa & Volume IPAS</h2>
+                    <p class="text-slate-600 text-sm mt-1">Jawablah pertanyaan berikut untuk menguji pemahamanmu dan raih Lencana Cendekiawan!</p>
+                </div>
+
+                <!-- Quiz Main Card -->
+                <div class="max-w-2xl mx-auto bg-slate-50 border-2 border-purple-100 rounded-3xl p-6 shadow-sm">
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-200 rounded-full h-3 mb-6 overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 20%"></div>
+                    </div>
+
+                    <!-- Question Container -->
+                    <div id="quiz-question-box">
+                        <div class="flex justify-between items-center text-xs text-slate-500 font-bold mb-2">
+                            <span>PERTANYAAN <span id="quiz-current-num">1</span> DARI 5</span>
+                            <span class="text-purple-600" id="quiz-category-tag">Pengertian Dasar</span>
+                        </div>
+                        
+                        <h3 id="quiz-question-text" class="text-lg md:text-xl font-bold text-slate-800 mb-6">
+                            Segala sesuatu yang memiliki massa dan menempati ruang disebut...
+                        </h3>
+
+                        <!-- Answer Options -->
+                        <div id="quiz-options-container" class="space-y-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Next Button -->
+                        <div class="mt-6 flex justify-end">
+                            <button id="quiz-next-btn" onclick="submitQuizAnswer()" disabled class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center shadow-md">
+                                Jawaban Berikutnya <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Score Result View (Hidden by default) -->
+                    <div id="quiz-result-box" class="hidden text-center py-6">
+                        <div class="text-6xl mb-3">🏆</div>
+                        <h3 class="text-2xl font-bold text-slate-800">Petualangan Kuis Selesai!</h3>
+                        <p class="text-slate-600 text-sm mt-1">Kamu telah menyelesaikan kuis detektif massa dan volume!</p>
+                        
+                        <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 my-6 inline-block min-w-[240px]">
+                            <div class="text-xs font-bold text-purple-700 uppercase tracking-wider">SKOR AKHIR KUIS</div>
+                            <div class="text-4xl font-extrabold text-purple-900 my-1" id="quiz-final-score">100</div>
+                            <div class="text-xs text-purple-600" id="quiz-final-stars">⭐⭐⭐⭐⭐</div>
+                        </div>
+
+                        <!-- Review & Explanations Container -->
+                        <div id="quiz-review-box" class="mt-6 text-left border-t border-purple-200 pt-6">
+                            <h4 class="font-bold text-slate-800 text-base mb-4 flex items-center">
+                                <i class="fa-solid fa-book-bookmark text-purple-600 mr-2"></i> Pembahasan & Kunci Jawaban Kuis
+                            </h4>
+                            <div id="quiz-review-list" class="space-y-4">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center gap-3 mt-8">
+                            <button onclick="restartQuiz()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-xl transition shadow-lg flex items-center">
+                                <i class="fa-solid fa-rotate-right mr-2"></i> Coba Kuis Lagi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 4: RINGKASAN MATERI (MODUL BUKU)   -->
+        <!-- ========================================== -->
+        <section id="sec-material" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100">
+                <div class="mb-6 text-center max-w-2xl mx-auto">
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Rangkuman Bahan Ajar</span>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-1">Catatan Ringkas Detektif IPAS</h2>
+                    <p class="text-slate-600 text-sm mt-1">Pelajari kembali konsep penting Massa & Volume sesuai Bahan Ajar Resmi!</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Concept 1: Materi -->
+                    <div class="bg-emerald-50/60 border-2 border-emerald-200 rounded-2xl p-5 hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="bg-emerald-500 text-white p-2.5 rounded-xl">
+                                <i class="fa-solid fa-cubes text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-emerald-950">1. Apa itu Materi?</h3>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed">
+                            <b>Materi</b> adalah segala sesuatu yang memiliki <b>massa</b> dan <b>menempati ruang (volume)</b>. Materi dapat berwujud padat, cair, maupun gas.
+                        </p>
+                        <div class="mt-3 bg-white p-3 rounded-xl text-xs text-slate-600 border border-emerald-100 shadow-sm">
+                            <b>Contoh:</b> Meja, buku, air botol, dan udara yang dihirup adalah materi karena memiliki berat dan ruang.
+                        </div>
+                    </div>
+
+                    <!-- Concept 2: Massa -->
+                    <div class="bg-teal-50/60 border-2 border-teal-200 rounded-2xl p-5 hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="bg-teal-500 text-white p-2.5 rounded-xl">
+                                <i class="fa-solid fa-weight-hanging text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-teal-950">2. Massa</h3>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed">
+                            Massa adalah <b>banyaknya zat penyusun</b> yang terkandung dalam suatu benda. Semakin banyak zatnya, semakin besar massanya.
+                        </p>
+                        <ul class="mt-3 text-xs text-slate-600 space-y-1 list-disc list-inside bg-white p-3 rounded-xl border border-teal-100 shadow-sm">
+                            <li>Alat Ukur: <b>Neraca / Timbangan</b></li>
+                            <li>Satuan Baku: <b>Kilogram (kg)</b> atau <b>gram (g)</b></li>
+                            <li><b>Nilai Tetap:</b> Massa batu 2 kg tetap 2 kg walaupun dipindah dari kelas ke lapangan.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Concept 3: Volume -->
+                    <div class="bg-cyan-50/60 border-2 border-cyan-200 rounded-2xl p-5 hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="bg-cyan-500 text-white p-2.5 rounded-xl">
+                                <i class="fa-solid fa-glass-water text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-cyan-950">3. Volume</h3>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed">
+                            Volume adalah <b>ruang yang ditempati</b> oleh suatu benda.
+                        </p>
+                        <ul class="mt-3 text-xs text-slate-600 space-y-1 list-disc list-inside bg-white p-3 rounded-xl border border-cyan-100 shadow-sm">
+                            <li>Benda Cair: <b>Gelas Ukur</b> (satuan Liter / mL).</li>
+                            <li>Benda Padat Beraturan: Rumus <b>(panjang × lebar × tinggi)</b> dalam cm³.</li>
+                            <li>Benda Tidak Beraturan (Batu): Mengamati <b>kenaikan air</b> pada gelas ukur.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Concept 4: Perbandingan Tabel -->
+                    <div class="bg-indigo-50/60 border-2 border-indigo-200 rounded-2xl p-5 hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="bg-indigo-500 text-white p-2.5 rounded-xl">
+                                <i class="fa-solid fa-table-list text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-indigo-950">4. Perbedaan Utama Massa & Volume</h3>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed">
+                            Ukuran benda (volume) tidak selalu sejalan dengan massanya (beratnya).
+                        </p>
+                        <div class="mt-3 overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-700 bg-white rounded-xl overflow-hidden shadow-sm border border-indigo-100">
+                                <thead class="bg-indigo-600 text-white">
+                                    <tr>
+                                        <th class="p-2">Aspek</th>
+                                        <th class="p-2">Massa</th>
+                                        <th class="p-2">Volume</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-2 font-bold">Arti</td>
+                                        <td class="p-2">Banyaknya zat penyusun</td>
+                                        <td class="p-2">Ruang yang ditempati</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="p-2 font-bold">Alat Ukur</td>
+                                        <td class="p-2">Timbangan / Neraca</td>
+                                        <td class="p-2">Gelas Ukur / Rumus</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-bold">Satuan</td>
+                                        <td class="p-2 font-semibold text-emerald-700">kg, gram (g)</td>
+                                        <td class="p-2 font-semibold text-cyan-700">Liter (L), mL, cm³</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 py-4 text-center text-xs mt-8">
+        <p>© 2026 Game Edukasi IPAS SD - Materi Wujud Zat & Perubahannya (Massa dan Volume) by Muhammad Nurul Huda</p>
+    </footer>
+
+    <!-- Dedicated Confetti Canvas to prevent getBoundingClientRect errors -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
+
+    <!-- Toast Badge Notification -->
+    <div id="badge-toast" class="fixed bottom-5 right-5 bg-amber-400 text-slate-900 px-5 py-3 rounded-2xl shadow-2xl font-bold flex items-center space-x-3 border-2 border-amber-200 transform translate-y-24 transition-transform duration-500 z-50">
+        <div class="text-3xl">🏅</div>
+        <div>
+            <div class="text-[10px] uppercase tracking-wider text-amber-900 font-bold">Lencana Baru Dibuka!</div>
+            <div id="toast-badge-name" class="text-sm font-extrabold text-slate-900">Ahli Massa IPAS</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC                           -->
+    <!-- ========================================== -->
+    <script>
+        // Game State Variables
+        let globalScore = 0;
+        let badgesUnlocked = new Set();
+        let soundEnabled = true;
+        let audioCtx = null;
+        let myConfetti = null;
+
+        // Safe Confetti Particle Trigger
+        function triggerConfetti() {
+            try {
+                if (myConfetti) {
+                    myConfetti({
+                        particleCount: 40,
+                        spread: 60,
+                        origin: { y: 0.8 }
+                    });
+                } else if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 40,
+                        spread: 60,
+                        origin: { y: 0.8 }
+                    });
+                }
+            } catch (e) {
+                console.warn('Confetti effect handled safely:', e);
+            }
+        }
+
+        // Safe Web Audio API Synthesizer
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'splash') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {
+                // Audio safely skipped if unsupported
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('audio-icon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-white';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-300';
+            }
+        }
+
+        function switchTab(tabId) {
+            playSound('click');
+            const tabs = ['lab', 'compare', 'quiz', 'material'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const sec = document.getElementById(`sec-${t}`);
+                if (t === tabId) {
+                    btn.className = 'tab-btn active px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-emerald-600 text-white scale-105';
+                    sec.classList.remove('hidden');
+                    sec.classList.add('block');
+                } else {
+                    btn.className = 'tab-btn px-5 py-2.5 rounded-2xl font-bold transition-all shadow-md flex items-center space-x-2 bg-white text-slate-700 hover:bg-emerald-50';
+                    sec.classList.remove('block');
+                    sec.classList.add('hidden');
+                }
+            });
+        }
+
+        function addScore(pts) {
+            globalScore += pts;
+            document.getElementById('global-score').textContent = globalScore;
+        }
+
+        function unlockBadge(badgeName) {
+            if (!badgesUnlocked.has(badgeName)) {
+                badgesUnlocked.add(badgeName);
+                document.getElementById('badge-count').textContent = `${badgesUnlocked.size}/4`;
+                
+                const toast = document.getElementById('badge-toast');
+                document.getElementById('toast-badge-name').textContent = badgeName;
+                toast.classList.remove('translate-y-24');
+                toast.classList.add('translate-y-0');
+
+                triggerConfetti();
+
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-0');
+                    toast.classList.add('translate-y-24');
+                }, 3500);
+            }
+        }
+
+        /* ==================================================== */
+        /* SECTION 1: LAB EXPERIMENT OBJECTS DATA & LOGIC       */
+        /* ==================================================== */
+        const pakuSvgIcon = `<svg class="w-10 h-10 inline-block drop-shadow-md transform -rotate-12 align-middle" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="pakuMetallic" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="25%" stop-color="#cbd5e1"/>
+                    <stop offset="55%" stop-color="#64748b"/>
+                    <stop offset="80%" stop-color="#94a3b8"/>
+                    <stop offset="100%" stop-color="#334155"/>
+                </linearGradient>
+                <linearGradient id="pakuHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="50%" stop-color="#94a3b8"/>
+                    <stop offset="100%" stop-color="#475569"/>
+                </linearGradient>
+            </defs>
+            <!-- Nail Flat Head Top -->
+            <ellipse cx="20" cy="20" rx="13" ry="5.5" transform="rotate(-45 20 20)" fill="url(#pakuHead)" stroke="#334155" stroke-width="1.5"/>
+            <!-- Main Shaft -->
+            <path d="M 23 21 L 76 74 L 86 86 L 74 76 L 21 23 Z" fill="url(#pakuMetallic)" stroke="#334155" stroke-width="1.2"/>
+            <!-- Ribbed Ridges near Head -->
+            <line x1="28" y1="23" x2="23" y2="28" stroke="#475569" stroke-width="1.8"/>
+            <line x1="33" y1="28" x2="28" y2="33" stroke="#475569" stroke-width="1.8"/>
+            <line x1="38" y1="33" x2="33" y2="38" stroke="#475569" stroke-width="1.8"/>
+        </svg>`;
+
+        const labObjects = [
+            {
+                id: 'spons',
+                name: 'Spons Raksasa',
+                icon: '🧽',
+                mass: 20, // grams
+                volume: 180, // mL
+                desc: 'Spons berukuran besar yang penuh rongga udara. Volumenya besar (180 mL), tetapi massanya sangat ringan (hanya 20g)!',
+                tag: 'Volume Besar, Massa Kecil'
+            },
+            {
+                id: 'batu',
+                name: 'Batu Kerikil Padat',
+                icon: '🪨',
+                mass: 150, // grams
+                volume: 50, // mL
+                desc: 'Batu padat berukuran kecil. Massanya cukup berat (150g) meskipun volumenya hanya 50 mL.',
+                tag: 'Benda Padat Kerapatan Tinggi'
+            },
+            {
+                id: 'paku',
+                name: 'Paku Besi',
+                icon: pakuSvgIcon,
+                mass: 50, // grams
+                volume: 10, // mL
+                desc: 'Paku terbuat dari besi padat. Ukuran ruangnya kecil (10 mL), tetapi massanya 50 gram.',
+                tag: 'Logam Padat'
+            },
+            {
+                id: 'balon',
+                name: 'Balon Ditiup Udara',
+                icon: '🎈',
+                mass: 5, // grams
+                volume: 160, // mL
+                desc: 'Balon yang ditiup menempati ruang 160 mL tetapi massanya hampir 0 (hanya 5 gram berisi udara).',
+                tag: 'Wujud Gas/Plastik'
+            },
+            {
+                id: 'apel',
+                name: 'Buah Apel Segar',
+                icon: '🍎',
+                mass: 120, // grams
+                volume: 100, // mL
+                desc: 'Buah apel padat berisi air dengan massa 120 gram dan menempati volume air 100 mL.',
+                tag: 'Benda Alam Padat'
+            },
+            {
+                id: 'botol',
+                name: 'Botol Sirup Mini',
+                icon: '🧴',
+                mass: 240, // grams
+                volume: 140, // mL
+                desc: 'Botol berisi cairan sirup manis. Berisi zat cair yang bermassa dan bervolume jelas.',
+                tag: 'Wujud Cair & Wadah'
+            }
+        ];
+
+        function initLabShelf() {
+            const shelf = document.getElementById('object-shelf');
+            shelf.innerHTML = '';
+            labObjects.forEach(obj => {
+                const btn = document.createElement('button');
+                btn.className = 'draggable-item bg-white border-2 border-amber-200 hover:border-amber-400 p-3 rounded-2xl flex flex-col items-center shadow-sm transition';
+                btn.onclick = () => selectLabItem(obj);
+                btn.innerHTML = `
+                    <span class="text-3xl mb-1 flex items-center justify-center min-h-[40px]">${obj.icon}</span>
+                    <span class="text-xs font-bold text-slate-700">${obj.name}</span>
+                `;
+                shelf.appendChild(btn);
+            });
+        }
+
+        function selectLabItem(item) {
+            playSound('splash');
+
+            // Update Scale (Massa)
+            const scaleDisplay = document.getElementById('scale-item-display');
+            const scaleVal = document.getElementById('scale-value');
+            scaleDisplay.innerHTML = `<span class="text-4xl animate-bounce flex items-center justify-center">${item.icon}</span>`;
+            scaleVal.textContent = item.mass.toFixed(1);
+
+            // Update Volume Cylinder
+            const waterFill = document.getElementById('water-fill');
+            const cylinderDisplay = document.getElementById('cylinder-item-display');
+            const volVal = document.getElementById('volume-value');
+            const volDelta = document.getElementById('volume-delta');
+
+            const totalVol = 100 + item.volume;
+            const fillPercentage = Math.min((totalVol / 300) * 100, 95);
+
+            waterFill.style.height = `${fillPercentage}%`;
+            cylinderDisplay.innerHTML = `<span class="text-3xl drop-shadow flex items-center justify-center">${item.icon}</span>`;
+            volVal.textContent = totalVol;
+            volDelta.textContent = `(Air Awal 100 mL + Benda ${item.volume} mL)`;
+
+            // Show Observation Card
+            const obsCard = document.getElementById('observation-card');
+            const obsTitle = document.getElementById('obs-title');
+            const obsDesc = document.getElementById('obs-desc');
+            const obsTags = document.getElementById('obs-tags');
+
+            obsCard.classList.remove('hidden');
+            obsTitle.innerHTML = `Hasil Analisis: ${item.name} <span class="inline-block align-middle ml-1">${item.icon}</span>`;
+            obsDesc.textContent = item.desc;
+            obsTags.innerHTML = `
+                <span class="bg-emerald-200 text-emerald-900 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-weight-hanging mr-1"></i> Massa: ${item.mass} Gram</span>
+                <span class="bg-cyan-200 text-cyan-900 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-flask-vial mr-1"></i> Volume: ${item.volume} mL</span>
+                <span class="bg-amber-200 text-amber-900 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-tag mr-1"></i> ${item.tag}</span>
+            `;
+
+            addScore(10);
+            unlockBadge('Detektif Laboratorium');
+        }
+
+        function resetLab() {
+            playSound('click');
+            document.getElementById('scale-item-display').innerHTML = `<span class="text-slate-400 text-xs italic">Belum ada benda</span>`;
+            document.getElementById('scale-value').textContent = "0.0";
+            
+            const waterFill = document.getElementById('water-fill');
+            waterFill.style.height = `33.3%`;
+            document.getElementById('cylinder-item-display').innerHTML = '';
+            document.getElementById('volume-value').textContent = "100";
+            document.getElementById('volume-delta').textContent = "(Air Awal: 100 mL)";
+
+            document.getElementById('observation-card').classList.add('hidden');
+        }
+
+        /* ==================================================== */
+        /* SECTION 2: COMPARISON EXPERIMENT DATA & LOGIC        */
+        /* ==================================================== */
+        const comparisonChallenges = [
+            {
+                left: { name: 'Spons Raksasa', icon: '🧽', vol: 'Sangat Besar', massValue: 20 },
+                right: { name: 'Batu Kerikil Padat', icon: '🪨', vol: 'Kecil', massValue: 150 },
+                correctAnswer: 'B',
+                tiltDegree: 12, // tilt right
+                explanation: 'Benar! Spons berukuran besar (volume besar) memiliki banyak rongga udara sehingga massanya lebih ringan daripada batu yang padat!'
+            },
+            {
+                left: { name: 'Balon Udara Ditiup', icon: '🎈', vol: 'Sangat Besar', massValue: 5 },
+                right: { name: 'Paku Besi', icon: pakuSvgIcon, vol: 'Sangat Kecil', massValue: 50 },
+                correctAnswer: 'B',
+                tiltDegree: 14, // tilt right
+                explanation: 'Tepat sekali! Balon ditiup volumenya besar karena berisi udara, tetapi paku besi yang kecil jauh lebih bermassa (berat)!'
+            },
+            {
+                left: { name: 'Segenggam Kapas', icon: '☁️', vol: 'Besar (Mekar)', massValue: 10 },
+                right: { name: 'Kunci Besi', icon: '🔑', vol: 'Kecil', massValue: 60 },
+                correctAnswer: 'B',
+                tiltDegree: 10, // tilt right
+                explanation: 'Hebat! Kapas terlihat besar tetapi sangat ringan. Kunci besi yang kecil memiliki kepadatan zat penyusun lebih tinggi!'
+            },
+            {
+                left: { name: 'Semangka Utuh', icon: '🍉', vol: 'Sangat Besar', massValue: 3000 },
+                right: { name: 'Buah Jeruk', icon: '🍊', vol: 'Sedang', massValue: 150 },
+                correctAnswer: 'A',
+                tiltDegree: -14, // tilt left
+                explanation: 'Pintar! Jika bahannya sama-sama padat berisi air, maka semangka yang volumenya lebih besar juga memiliki massa yang lebih besar.'
+            }
+        ];
+
+        let compareIndex = 0;
+        let compareScore = 0;
+
+        function renderComparisonStep() {
+            const data = comparisonChallenges[compareIndex];
+            document.getElementById('compare-step-num').textContent = compareIndex + 1;
+            
+            document.getElementById('img-left').innerHTML = data.left.icon;
+            document.getElementById('title-left').textContent = data.left.name;
+            document.getElementById('vol-left').textContent = data.left.vol;
+            document.getElementById('seesaw-left-icon').innerHTML = data.left.icon;
+
+            document.getElementById('img-right').innerHTML = data.right.icon;
+            document.getElementById('title-right').textContent = data.right.name;
+            document.getElementById('vol-right').textContent = data.right.vol;
+            document.getElementById('seesaw-right-icon').innerHTML = data.right.icon;
+
+            // Reset seesaw tilt angle
+            document.getElementById('seesaw-beam').style.transform = 'rotate(0deg)';
+            document.getElementById('compare-feedback').classList.add('hidden');
+        }
+
+        function answerComparison(choice) {
+            const data = comparisonChallenges[compareIndex];
+            const feedbackBox = document.getElementById('compare-feedback');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackIcon = document.getElementById('feedback-icon');
+
+            // Tilt the balance beam visually to reflect mass
+            const beam = document.getElementById('seesaw-beam');
+            beam.style.transform = `rotate(${data.tiltDegree}deg)`;
+
+            if (choice === data.correctAnswer) {
+                playSound('correct');
+                compareScore += 25;
+                addScore(25);
+                document.getElementById('compare-score').textContent = compareScore;
+                
+                feedbackIcon.textContent = '🌟';
+                feedbackTitle.textContent = 'Jawaban Tepat Detektif!';
+                feedbackText.textContent = data.explanation;
+                feedbackBox.className = 'mt-4 bg-emerald-100 border-2 border-emerald-400 p-4 rounded-2xl block';
+            } else {
+                playSound('wrong');
+                feedbackIcon.textContent = '💡';
+                feedbackTitle.textContent = 'Kurang Tepat, Coba Amati Lagi!';
+                feedbackText.textContent = `Ingat: Ukuran besar (volume) tidak menjamin massa lebih berat! ${data.explanation}`;
+                feedbackBox.className = 'mt-4 bg-amber-100 border-2 border-amber-400 p-4 rounded-2xl block';
+            }
+        }
+
+        function nextComparison() {
+            playSound('click');
+            compareIndex++;
+            if (compareIndex < comparisonChallenges.length) {
+                renderComparisonStep();
+            } else {
+                unlockBadge('Master Pembanding Massa');
+                compareIndex = 0;
+                renderComparisonStep();
+            }
+        }
+
+        /* ==================================================== */
+        /* SECTION 3: QUIZ DATA & LOGIC                         */
+        /* ==================================================== */
+        const quizQuestions = [
+            {
+                category: 'Pengertian Dasar',
+                question: 'Segala sesuatu yang memiliki massa dan menempati ruang (volume) disebut...',
+                options: ['Zat Energi', 'Materi', 'Gravitasi', 'Wadah Benda'],
+                correct: 1,
+                reason: 'Materi didefinisikan sebagai segala sesuatu yang mempunyai massa dan volume (menempati ruang).'
+            },
+            {
+                category: 'Konsep Massa',
+                question: 'Apakah nilai massa suatu batu (misalnya 2 kg) akan berubah jika dipindahkan dari dalam kelas ke lapangan sekolah?',
+                options: ['Berubah jadi lebih berat', 'Berubah jadi lebih ringan', 'Nilainya tetap 2 kg', 'Massanya hilang'],
+                correct: 2,
+                reason: 'Massa adalah banyaknya zat penyusun dan nilainya TETAP di mana pun benda diletakkan.'
+            },
+            {
+                category: 'Alat & Satuan Ukur',
+                question: 'Alat ukur dan satuan baku yang tepat untuk mengukur MASSA benda adalah...',
+                options: [
+                    'Gelas ukur dengan satuan Liter (L)',
+                    'Penggaris dengan satuan Centimeter (cm)',
+                    'Timbangan/Neraca dengan satuan Kilogram (kg)',
+                    'Thermometer dengan satuan Celcius (°C)'
+                ],
+                correct: 2,
+                reason: 'Massa diukur menggunakan neraca/timbangan dengan satuan baku kilogram (kg) atau gram (g).'
+            },
+            {
+                category: 'Pengukuran Volume',
+                question: 'Untuk mengetahui volume benda padat yang bentuknya TIDAK BERATURAN (seperti batu kerikil), cara yang benar adalah...',
+                options: [
+                    'Menimbang beratnya di timbangan digital',
+                    'Memasukkannya ke gelas ukur berisi air dan mengamati kenaikan air',
+                    'Mengukur panjangnya menggunakan meteran kain',
+                    'Meniupnya menggunakan pompa udara'
+                ],
+                correct: 1,
+                reason: 'Volume benda tidak beraturan diukur dari selisih kenaikan permukaan air pada gelas ukur.'
+            },
+            {
+                category: 'Analisis Mitos IPAS',
+                question: 'Manakah pernyataan yang PALING TEPAT mengenai hubungan ukuran benda (volume) dan massanya?',
+                options: [
+                    'Benda berukuran besar pasti bermassa besar',
+                    'Benda berukuran kecil tidak mungkin berat',
+                    'Benda berukuran besar belum tentu bermassa besar',
+                    'Semua benda memiliki massa dan volume yang sama'
+                ],
+                correct: 2,
+                reason: 'Benda besar seperti spons atau balon bisa sangat ringan karena massa tergantung pada kepadatan zat penyusunnya!'
+            }
+        ];
+
+        let quizCurrentIdx = 0;
+        let quizSelectedOpt = null;
+        let quizScore = 0;
+        let userQuizAnswers = [];
+
+        function renderQuizQuestion() {
+            const q = quizQuestions[quizCurrentIdx];
+            document.getElementById('quiz-current-num').textContent = quizCurrentIdx + 1;
+            document.getElementById('quiz-category-tag').textContent = q.category;
+            document.getElementById('quiz-question-text').textContent = q.question;
+            
+            const progressPct = ((quizCurrentIdx + 1) / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
+
+            const container = document.getElementById('quiz-options-container');
+            container.innerHTML = '';
+            quizSelectedOpt = null;
+            document.getElementById('quiz-next-btn').disabled = true;
+
+            q.options.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50 transition font-semibold text-slate-700 flex items-center justify-between group';
+                btn.onclick = () => selectQuizOption(i, btn);
+                btn.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-purple-200 text-slate-600 group-hover:text-purple-800 flex items-center justify-center font-bold text-sm">
+                            ${String.fromCharCode(65 + i)}
+                        </span>
+                        <span>${optText}</span>
+                    </div>
+                    <i class="fa-regular fa-circle text-slate-300 text-lg check-icon"></i>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectQuizOption(idx, btnEl) {
+            playSound('click');
+            quizSelectedOpt = idx;
+            document.getElementById('quiz-next-btn').disabled = false;
+
+            const allBtns = document.getElementById('quiz-options-container').querySelectorAll('button');
+            allBtns.forEach((b, i) => {
+                const icon = b.querySelector('.check-icon');
+                if (i === idx) {
+                    b.className = 'w-full text-left p-4 rounded-2xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-900 flex items-center justify-between shadow-sm';
+                    icon.className = 'fa-solid fa-circle-check text-purple-600 text-lg check-icon';
+                } else {
+                    b.className = 'w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 flex items-center justify-between opacity-60';
+                    icon.className = 'fa-regular fa-circle text-slate-300 text-lg check-icon';
+                }
+            });
+        }
+
+        function submitQuizAnswer() {
+            if (quizSelectedOpt === null) return;
+
+            const q = quizQuestions[quizCurrentIdx];
+            const isCorrect = (quizSelectedOpt === q.correct);
+
+            userQuizAnswers.push({
+                question: q.question,
+                userChoice: quizSelectedOpt,
+                correctChoice: q.correct,
+                options: q.options,
+                reason: q.reason,
+                isCorrect: isCorrect
+            });
+
+            if (isCorrect) {
+                playSound('correct');
+                quizScore += 20;
+                addScore(20);
+            } else {
+                playSound('wrong');
+            }
+
+            quizCurrentIdx++;
+            if (quizCurrentIdx < quizQuestions.length) {
+                renderQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-question-box').classList.add('hidden');
+            const resultBox = document.getElementById('quiz-result-box');
+            resultBox.classList.remove('hidden');
+
+            document.getElementById('quiz-final-score').textContent = quizScore;
+            
+            let stars = '⭐⭐⭐⭐⭐';
+            if (quizScore < 60) stars = '⭐⭐⭐';
+            else if (quizScore < 100) stars = '⭐⭐⭐⭐';
+            document.getElementById('quiz-final-stars').textContent = stars;
+
+            // Render complete review and explanations list
+            const reviewList = document.getElementById('quiz-review-list');
+            reviewList.innerHTML = '';
+
+            userQuizAnswers.forEach((ans, idx) => {
+                const card = document.createElement('div');
+                const isRight = ans.isCorrect;
+                card.className = `p-4 rounded-2xl border-2 ${isRight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'} shadow-sm text-sm`;
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <span class="font-bold ${isRight ? 'text-emerald-900' : 'text-rose-900'} flex items-center">
+                            <i class="fa-solid ${isRight ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'} mr-2 text-base"></i>
+                            Soal ${idx + 1}: ${ans.question}
+                        </span>
+                        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full ${isRight ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}">
+                            ${isRight ? 'Benar (+20)' : 'Salah (0)'}
+                        </span>
+                    </div>
+                    <div class="text-xs text-slate-700 space-y-1 mb-2 bg-white/80 p-3 rounded-xl border border-slate-200/60">
+                        <div><b>Jawaban Kamu:</b> <span class="${isRight ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}">${String.fromCharCode(65 + ans.userChoice)}. ${ans.options[ans.userChoice]}</span></div>
+                        ${!isRight ? `<div><b>Kunci Jawaban:</b> <span class="text-emerald-700 font-bold">${String.fromCharCode(65 + ans.correctChoice)}. ${ans.options[ans.correctChoice]}</span></div>` : ''}
+                    </div>
+                    <div class="text-xs text-slate-600 bg-purple-50 p-2.5 rounded-xl border border-purple-100 flex items-start">
+                        <i class="fa-solid fa-lightbulb text-amber-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                        <div><b>Penjelasan:</b> ${ans.reason}</div>
+                    </div>
+                `;
+                reviewList.appendChild(card);
+            });
+
+            if (quizScore >= 80) {
+                unlockBadge('Cendekiawan Massa & Volume');
+            }
+        }
+
+        function restartQuiz() {
+            playSound('click');
+            quizCurrentIdx = 0;
+            quizScore = 0;
+            userQuizAnswers = [];
+            document.getElementById('quiz-result-box').classList.add('hidden');
+            document.getElementById('quiz-question-box').classList.remove('hidden');
+            renderQuizQuestion();
+        }
+
+        window.onload = function() {
+            // Safely initialize custom confetti instance on explicit canvas
+            try {
+                const confettiCanvas = document.getElementById('confetti-canvas');
+                if (confettiCanvas && typeof confetti === 'function') {
+                    myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: false });
+                }
+            } catch (e) {
+                console.warn('Confetti setup skipped:', e);
+            }
+
+            initLabShelf();
+            renderComparisonStep();
+            renderQuizQuestion();
+            unlockBadge('Detektif Pemula');
+        };
+    </script>
+</body>
+</html>
